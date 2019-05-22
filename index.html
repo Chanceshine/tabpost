@@ -1,21 +1,182 @@
 var index = 0;
-            var status = 1;
-            var page1 = 1;
-            var page2 = 1;
-            var page3 = 1;
-            var page4 = 1;
-            var num = 10;
-            var loadend1 = false;
-            var loadend2 = false;
-            var loadend3 = false;
-            var loadend4 = false;
-            post('api/regist/data_list', {}, function (res) {
-                console.log(res)
-            })
-            post('api/regist/data_list', {page: page1, status: 1}, function (response) {
-                if (response.status) {
-                    var res = response.result.list;
-                    if(res.length != 0) {
+var status = 1;
+var page1 = 1;
+var page2 = 1;
+var page3 = 1;
+var page4 = 1;
+var num = 10;
+var loadend1 = false;
+var loadend2 = false;
+var loadend3 = false;
+var loadend4 = false;
+post('api/regist/data_list', {page: page1, status: 1}, function (response) {
+    if (response.status) {
+        var res = response.result.list;
+        if(res.length != 0) {
+            $.each(res, function (k, v) {
+                var temp = v.addtime*1000;
+                var time = format(temp);
+                $('.list:eq(0)').append(`<li class="item"><a class="box" href="regdetail/${v.id}">
+                    <div class="left">
+                        <div class="imgbox"><img src="${v.img_url}" alt=""></div>
+                    </div>
+                    <div class="right">
+                        <p>商标名称： <span>${v.trade_name}</span></p>
+                        <p>总费用： <span class="mcolor">￥${v.total}元</span></p>
+                        <p>申请人：<span>${v.name}</span></p>
+                        <span class="time">${time}</span>
+                    </div></a>
+                     <button class="paybtn">去支付</button>
+                </li>`)
+            });
+        }
+        if (res.length>0 && res.length<10) {
+            loadend1 = true;
+            $('.loadend:eq(0)').show();
+            return false;
+        }
+        if (res.length == 0) {
+            $('.null-list:eq(0)').show();
+        }
+        page1++;
+    }
+})
+$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    var page = 0;
+    // page = 1;               //切换tab重置页数
+    // loadend = false;            //切换tab重置加载完成flag
+    index = $(this).data('index');
+    if (index == 0 && loadend1 == true) {
+        return false;
+    } else if (index == 0 && loadend1 == false) {
+        page = page1;
+        page1++;
+    }
+    if (index == 1 && loadend2 == true) {
+        return false;
+    } else if (index == 1 && loadend1 == false) {
+        page = page2;
+        page2++;
+    }
+    if (index == 2 && loadend3 == true) {
+        return false;
+    } else if (index == 2 && loadend1 == false) {
+        page = page3;
+        page3++;
+    }
+    if (index == 3 && loadend4 == true) {
+        return false;
+    } else if (index == 3 && loadend1 == false) {
+        page = page4;
+        page4++;
+    }
+    status = index + 1;
+    post('api/regist/data_list', {page: page, status: status}, function (response) {
+        if (response.status) {
+            var res = response.result.list;
+            if(res.length != 0) {
+                var txt = '';
+                if (index == 1) {
+                    txt = '已支付';
+                } else if(index == 2) {
+                    txt = '已审核';
+                } else if(index == 3) {
+                    txt = '已完成';
+                }
+                if (index == 0) {
+                    $.each(res, function (k, v) {
+                        var temp = v.addtime*1000;
+                        var time = format(temp);
+                        $('.list:eq(0)').append(`<li class="item"><a class="box" href="regdetail/${v.id}">
+                            <div class="left">
+                                <div class="imgbox"><img src="${v.img_url}" alt=""></div>
+                            </div>
+                            <div class="right">
+                                <p>商标名称： <span>${v.trade_name}</span></p>
+                                <p>总费用： <span class="mcolor">￥${v.total}元</span></p>
+                                <p>申请人：<span>${v.name}</span></p>
+                                <span class="time">${time}</span>
+                            </div></a>
+                             <button class="paybtn">去支付</button>
+                        </li>`)
+                    });
+                } else {
+                    $.each(res, function (k, v) {
+                        var temp = v.addtime*1000;
+                        var time = format(temp);
+                        $('.list:eq('+index+')').append(`<li class="item"><a class="box" href="regdetail/${v.id}">
+                            <div class="left">
+                                <div class="imgbox"><img src="${v.img_url}" alt=""></div>
+                            </div>
+                            <div class="right">
+                                <p>商标名称： <span>${v.trade_name}</span></p>
+                                <p>总费用： <span class="mcolor">${txt}</span></p>
+                                <p>申请人：<span>${v.name}</span></p>
+                                <span class="time">${time}</span>
+                            </div></a>
+                             <button class="paybtn">去支付</button>
+                        </li>`)
+                    });
+                }
+            }
+            if (res.length>0 && res.length<10) {
+                var tabstatus = res[0].status;
+                if (tabstatus == 1) {
+                    loadend1 = true;
+                } else if (tabstatus == 2) {
+                    loadend2 = true;
+                } else if (tabstatus == 3) {
+                    loadend3 = true;
+                } else if (tabstatus == 4) {
+                    loadend4 = true;
+                }
+                $('.loadend:eq('+index+')').show()
+            }
+            if (res.length == 0) {
+                $('.null-list:eq('+index+')').show();
+            }
+        }
+    })
+})
+window.onscroll = function() {                
+    if(getScrollTop() + getClientHeight() == getScrollHeight() ) {
+        if (index == 0 && loadend1 == true) {
+            return false;
+        } else if (index == 0 && loadend1 == false) {
+            page = page1;                        
+        }
+        if (index == 1 && loadend2 == true) {
+            return false;
+        } else if (index == 1 && loadend2 == false) {
+            page = page2;                        
+        }
+        if (index == 2 && loadend3 == true) {
+            return false;
+        } else if (index == 2 && loadend3 == false) {
+            page = page3;                        
+        }
+        if (index == 3 && loadend4 == true) {
+            return false;
+        } else if (index == 3 && loadend4 == false) {
+            page = page4;                        
+        }                
+        post('api/regist/data_list', {page: page, status: status}, function (response) {
+            if (response.status) {
+                var res = response.result.list;
+                if(res.length != 0) {
+                    var txt = '';
+                    if (index == 1) {
+                        txt = '已支付';
+                        page2++;
+                    } else if(index == 2) {
+                        txt = '已审核';
+                        page3++;
+                    } else if(index == 3) {
+                        txt = '已完成';
+                        page4++;
+                    }
+                    if (index == 0) {
+                        page1++;
                         $.each(res, function (k, v) {
                             var temp = v.addtime*1000;
                             var time = format(temp);
@@ -32,228 +193,64 @@ var index = 0;
                                  <button class="paybtn">去支付</button>
                             </li>`)
                         });
+                    } else {
+                        $.each(res, function (k, v) {
+                            var temp = v.addtime*1000;
+                            var time = format(temp);
+                            $('.list:eq('+(index+1)+')').append(`<li class="item"><a class="box" href="regdetail/${v.id}">
+                                <div class="left">
+                                    <div class="imgbox"><img src="${v.img_url}" alt=""></div>
+                                </div>
+                                <div class="right">
+                                    <p>商标名称： <span>${v.trade_name}</span></p>
+                                    <p>总费用： <span class="mcolor">${txt}</span></p>
+                                    <p>申请人：<span>${v.name}</span></p>
+                                    <span class="time">${time}</span>
+                                </div></a>
+                                 <button class="paybtn">去支付</button>
+                            </li>`)
+                        });
                     }
-                    if (res.length>0 && res.length<10) {
+                    page++;
+                }
+                if (res.length>0 && res.length<10) {
+                    var tabstatus = res[0].status;
+                    if (tabstatus == 1) {
                         loadend1 = true;
-                        $('.loadend:eq(0)').show();
-                        return false;
+                    } else if (tabstatus == 2) {
+                        loadend2 = true;
+                    } else if (tabstatus == 3) {
+                        loadend3 = true;
+                    } else {
+                        loadend4 = true;
                     }
-                    if (res.length == 0) {
-                        $('.null-list:eq(0)').show();
-                    }
-                    page1++;
-                }
-            })
-            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-                var page = 0;
-                // page = 1;               //切换tab重置页数
-                // loadend = false;            //切换tab重置加载完成flag
-                index = $(this).data('index');
-                if (index == 0 && loadend1 == true) {
-                    return false;
-                } else if (index == 0 && loadend1 == false) {
-                    page = page1;
-                    page1++;
-                }
-                if (index == 1 && loadend2 == true) {
-                    return false;
-                } else if (index == 1 && loadend1 == false) {
-                    page = page2;
-                    page2++;
-                }
-                if (index == 2 && loadend3 == true) {
-                    return false;
-                } else if (index == 2 && loadend1 == false) {
-                    page = page3;
-                    page3++;
-                }
-                if (index == 3 && loadend4 == true) {
-                    return false;
-                } else if (index == 3 && loadend1 == false) {
-                    page = page4;
-                    page4++;
-                }
-                status = index + 1;
-                post('api/regist/data_list', {page: page, status: status}, function (response) {
-                    if (response.status) {
-                        var res = response.result.list;
-                        if(res.length != 0) {
-                            var txt = '';
-                            if (index == 1) {
-                                txt = '已支付';
-                            } else if(index == 2) {
-                                txt = '已审核';
-                            } else if(index == 3) {
-                                txt = '已完成';
-                            }
-                            if (index == 0) {
-                                $.each(res, function (k, v) {
-                                    var temp = v.addtime*1000;
-                                    var time = format(temp);
-                                    $('.list:eq(0)').append(`<li class="item"><a class="box" href="regdetail/${v.id}">
-                                        <div class="left">
-                                            <div class="imgbox"><img src="${v.img_url}" alt=""></div>
-                                        </div>
-                                        <div class="right">
-                                            <p>商标名称： <span>${v.trade_name}</span></p>
-                                            <p>总费用： <span class="mcolor">￥${v.total}元</span></p>
-                                            <p>申请人：<span>${v.name}</span></p>
-                                            <span class="time">${time}</span>
-                                        </div></a>
-                                         <button class="paybtn">去支付</button>
-                                    </li>`)
-                                });
-                            } else {
-                                $.each(res, function (k, v) {
-                                    var temp = v.addtime*1000;
-                                    var time = format(temp);
-                                    $('.list:eq('+index+')').append(`<li class="item"><a class="box" href="regdetail/${v.id}">
-                                        <div class="left">
-                                            <div class="imgbox"><img src="${v.img_url}" alt=""></div>
-                                        </div>
-                                        <div class="right">
-                                            <p>商标名称： <span>${v.trade_name}</span></p>
-                                            <p>总费用： <span class="mcolor">${txt}</span></p>
-                                            <p>申请人：<span>${v.name}</span></p>
-                                            <span class="time">${time}</span>
-                                        </div></a>
-                                         <button class="paybtn">去支付</button>
-                                    </li>`)
-                                });
-                            }
-                        }
-                        if (res.length>0 && res.length<10) {
-                            var tabstatus = res[0].status;
-                            if (tabstatus == 1) {
-                                loadend1 = true;
-                            } else if (tabstatus == 2) {
-                                loadend2 = true;
-                            } else if (tabstatus == 3) {
-                                loadend3 = true;
-                            } else if (tabstatus == 4) {
-                                loadend4 = true;
-                            }
-                            $('.loadend:eq('+index+')').show()
-                        }
-                        if (res.length == 0) {
-                            $('.null-list:eq('+index+')').show();
-                        }
-                    }
-                })
-            })
-            window.onscroll = function() {                
-                if(getScrollTop() + getClientHeight() == getScrollHeight() ) {
-                    if (index == 0 && loadend1 == true) {
-                        return false;
-                    } else if (index == 0 && loadend1 == false) {
-                        page = page1;                        
-                    }
-                    if (index == 1 && loadend2 == true) {
-                        return false;
-                    } else if (index == 1 && loadend2 == false) {
-                        page = page2;                        
-                    }
-                    if (index == 2 && loadend3 == true) {
-                        return false;
-                    } else if (index == 2 && loadend3 == false) {
-                        page = page3;                        
-                    }
-                    if (index == 3 && loadend4 == true) {
-                        return false;
-                    } else if (index == 3 && loadend4 == false) {
-                        page = page4;                        
-                    }                
-                    post('api/regist/data_list', {page: page, status: status}, function (response) {
-                        if (response.status) {
-                            var res = response.result.list;
-                            if(res.length != 0) {
-                                var txt = '';
-                                if (index == 1) {
-                                    txt = '已支付';
-                                    page2++;
-                                } else if(index == 2) {
-                                    txt = '已审核';
-                                    page3++;
-                                } else if(index == 3) {
-                                    txt = '已完成';
-                                    page4++;
-                                }
-                                if (index == 0) {
-                                    page1++;
-                                    $.each(res, function (k, v) {
-                                        var temp = v.addtime*1000;
-                                        var time = format(temp);
-                                        $('.list:eq(0)').append(`<li class="item"><a class="box" href="regdetail/${v.id}">
-                                            <div class="left">
-                                                <div class="imgbox"><img src="${v.img_url}" alt=""></div>
-                                            </div>
-                                            <div class="right">
-                                                <p>商标名称： <span>${v.trade_name}</span></p>
-                                                <p>总费用： <span class="mcolor">￥${v.total}元</span></p>
-                                                <p>申请人：<span>${v.name}</span></p>
-                                                <span class="time">${time}</span>
-                                            </div></a>
-                                             <button class="paybtn">去支付</button>
-                                        </li>`)
-                                    });
-                                } else {
-                                    $.each(res, function (k, v) {
-                                        var temp = v.addtime*1000;
-                                        var time = format(temp);
-                                        $('.list:eq('+(index+1)+')').append(`<li class="item"><a class="box" href="regdetail/${v.id}">
-                                            <div class="left">
-                                                <div class="imgbox"><img src="${v.img_url}" alt=""></div>
-                                            </div>
-                                            <div class="right">
-                                                <p>商标名称： <span>${v.trade_name}</span></p>
-                                                <p>总费用： <span class="mcolor">${txt}</span></p>
-                                                <p>申请人：<span>${v.name}</span></p>
-                                                <span class="time">${time}</span>
-                                            </div></a>
-                                             <button class="paybtn">去支付</button>
-                                        </li>`)
-                                    });
-                                }
-                                page++;
-                            }
-                            if (res.length>0 && res.length<10) {
-                                var tabstatus = res[0].status;
-                                if (tabstatus == 1) {
-                                    loadend1 = true;
-                                } else if (tabstatus == 2) {
-                                    loadend2 = true;
-                                } else if (tabstatus == 3) {
-                                    loadend3 = true;
-                                } else {
-                                    loadend4 = true;
-                                }
-                                $('.loadend:eq('+index+')').show()
-                            }
-                        }
-                    })
+                    $('.loadend:eq('+index+')').show()
                 }
             }
-            //获取滚动条当前的位置 
-            function getScrollTop() {
-                var scrollTop = 0;
-                if(document.documentElement && document.documentElement.scrollTop) {
-                    scrollTop = document.documentElement.scrollTop;
-                } else if(document.body) {
-                    scrollTop = document.body.scrollTop;
-                }
-                return scrollTop;
-            }    
-            //获取当前可视范围的高度 
-            function getClientHeight() {
-                var clientHeight = 0;
-                if(document.body.clientHeight && document.documentElement.clientHeight) {
-                    clientHeight = Math.min(document.body.clientHeight, document.documentElement.clientHeight);
-                } else {
-                    clientHeight = Math.max(document.body.clientHeight, document.documentElement.clientHeight);
-                }
-                return clientHeight;
-            }    
-            //获取文档完整的高度 
-            function getScrollHeight() {
-                return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-            }
+        })
+    }
+}
+//获取滚动条当前的位置 
+function getScrollTop() {
+    var scrollTop = 0;
+    if(document.documentElement && document.documentElement.scrollTop) {
+        scrollTop = document.documentElement.scrollTop;
+    } else if(document.body) {
+        scrollTop = document.body.scrollTop;
+    }
+    return scrollTop;
+}    
+//获取当前可视范围的高度 
+function getClientHeight() {
+    var clientHeight = 0;
+    if(document.body.clientHeight && document.documentElement.clientHeight) {
+        clientHeight = Math.min(document.body.clientHeight, document.documentElement.clientHeight);
+    } else {
+        clientHeight = Math.max(document.body.clientHeight, document.documentElement.clientHeight);
+    }
+    return clientHeight;
+}    
+//获取文档完整的高度 
+function getScrollHeight() {
+    return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+}
